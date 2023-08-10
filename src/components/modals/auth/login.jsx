@@ -1,20 +1,29 @@
 import React from 'react'
 import PropTypes from 'prop-types'
-import Modal from 'react-bootstrap/Modal'
+
+// material tailwind modal
+import {
+  Button,
+  Dialog,
+  DialogHeader,
+  DialogBody,
+  DialogFooter,
+} from "@material-tailwind/react";
+
 
 import FormsAuthLogin from '@/components/forms/auth/login'
 
 const ModalsLogin = ({ close, onSubmit }) => (
-  <Modal show onHide={close}>
-    <Modal.Header closeButton>
-      <Modal.Title>Login</Modal.Title>
-    </Modal.Header>
-    <Modal.Body>
+    <Dialog
+    size="xs"
+    open={close}
+    handler={handleOpen}
+    className="bg-transparent shadow-none"
+    >
       <FormsAuthLogin
         onSubmit={onSubmit}
       />
-    </Modal.Body>
-  </Modal>
+    </Dialog>
 )
 ModalsLogin.propTypes = {
   close: PropTypes.func.isRequired,
