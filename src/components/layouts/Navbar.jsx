@@ -5,12 +5,9 @@ import {
   Typography,
   IconButton,
   Button,
-  Input,
-} from "@material-tailwind/react";
-import { BellIcon, Cog6ToothIcon } from "@heroicons/react/24/solid";
-
-
-
+  Input
+} from "@material-tailwind/react"
+import { BellIcon, Cog6ToothIcon } from "@heroicons/react/24/solid"
 
 // img
 
@@ -19,16 +16,16 @@ import { BellIcon, Cog6ToothIcon } from "@heroicons/react/24/solid";
 export default function CompsLayoutsNavbar() {
 
   return (
-    
-      <Navbar
-        variant="gradient"
-        color="blue-gray"
-        className="sticky top-0 mx-auto max-w-screen-xl from-blue-gray-900 to-blue-gray-800 px-4 py-3"
+
+    <Navbar
+      variant="gradient"
+      color="blue-gray"
+      className="sticky top-0 mx-auto max-w-screen-xl from-blue-gray-900 to-blue-gray-800 px-4 py-3"
     >
       <div className="flex flex-wrap bg-transparent-30 items-center justify-between gap-y-4 text-white">
         <Typography
           as="a"
-          href="#"
+          href="/"
           variant="h6"
           className="mr-4 ml-2 cursor-pointer py-1.5"
         >
@@ -55,7 +52,7 @@ export default function CompsLayoutsNavbar() {
             label="Type here..."
             className="pr-20"
             containerProps={{
-              className: "min-w-[288px]",
+              className: "min-w-[288px]"
             }}
           />
           <Button
@@ -68,7 +65,7 @@ export default function CompsLayoutsNavbar() {
         </div>
       </div>
     </Navbar>
-          
+
 
   )
 }

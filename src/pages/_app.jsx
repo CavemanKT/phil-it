@@ -3,9 +3,10 @@ import * as React from 'react'
 import { ToastContainer } from 'react-toastify'
 import 'react-toastify/dist/ReactToastify.css'
 
+
 export const metadata = {
-    title: "caveBlog",
-    description: "our cosy cave"
+  title: "caveBlog",
+  description: "our cosy cave"
 }
 
 export default function MyApp({ Component, pageProps }) {

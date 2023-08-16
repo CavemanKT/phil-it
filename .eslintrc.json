@@ -1,10 +1,7 @@
 {
   "extends": [
     "next",
-    "next/core-web-vitals",
-    "airbnb-base",
-    "airbnb/rules/react",
-    "airbnb/hooks"
+    "next/core-web-vitals"
   ],
   "rules": {
     "semi": [2, "never"],
@@ -27,8 +24,6 @@
     "react/jsx-props-no-spreading": 0,
     "react-hooks/exhaustive-deps": 0,
     "import/prefer-default-export": 0
-    // "react/destructuring-assignment": 0,
-    // "react-redux/prefer-separate-component-file": 0
   },
   "settings": {
     "react": {
