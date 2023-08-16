@@ -36,8 +36,8 @@ const pageChatRoom = () => {
 
     // ComponentDidMount -- start of useEffect
     useEffect(() => {
-        socket.on('receive-message', data => {
-            console.log(data)
+        socket.on('receive-message', (data) => {
+            console.log(data.msg, data.username, data.room)
             setChat([...chat, data])
         })
 
@@ -46,7 +46,7 @@ const pageChatRoom = () => {
             socket.emit("join-room", { room, username }, initMsg => {
                 console.log(room, username);
                 if (chat.length == 0) {
-                    setChat([initMsg])
+                    setChat([initMsg, username, room])
                 }
             })
 
@@ -76,18 +76,12 @@ const pageChatRoom = () => {
     const sendMessage = async () => {
         if (msg === "") return
         // build msg obj
-
-        setChat([...chat, msg])
+        let data = {
+            msg: msg, username: username, room: roomName
+        }
+        setChat([...chat, data])
         // dispatch message to other users
-        // const resp = await fetch("/api/chat", {
-        //     method: "POST",
-        //     headers: {
-        //         "Content-Type": "application/json"
-        //     },
-        //     body: JSON.stringify(msg, room)
-        // })
-        console.log(roomName);
-        const resp = socket.emit("message", msg, roomName)
+        const resp = socket.emit("message", data)
 
 
         // reset field if OK
@@ -110,9 +104,9 @@ const pageChatRoom = () => {
 
     // Done
     // chatList -> determine which is me or other users
-    const meUser = (msg, user = 'name1', room = 'room1') => {
-
-        if (user == 'name1') {
+    const meUser = (msg, user) => {
+        console.log(msg, user);
+        if (user == username) {
             return (
                 <div className="flex justify-end mb-4">
                     <div className="mr-2 py-3 px-4 bg-blue-400 rounded-bl-3xl rounded-tl-3xl rounded-tr-xl text-white" >
@@ -126,8 +120,9 @@ const pageChatRoom = () => {
     }
     // Done
     // chatList -> determine which is me or other users
-    const otherUser = (msg, user = 'name2', room = 'room2') => {
-        if (user !== 'name1') {
+    const otherUser = (msg, user) => {
+        console.log(msg, user);
+        if (user !== username) {
             return (
                 <div className="flex justify-start mb-4">
                     {/* <img src="https://source.unsplash.com/vpOeXr5wmR4/600x600" className="object-cover h-8 w-8 rounded-full" alt="" /> */}
@@ -246,7 +241,7 @@ const pageChatRoom = () => {
                         <div className="flex flex-col mt-5">
                             {chat.length ? (chat.map((chat, i) => (
                                 <div key={"msg_" + i} tw='mt-1'>
-                                    {username === "name1" ? meUser(chat) : otherUser(chat)}
+                                    {chat.username === username ? meUser(chat.msg, chat.username) : otherUser(chat.msg, chat.username)}
                                 </div>
                             ))
                             ) : (
