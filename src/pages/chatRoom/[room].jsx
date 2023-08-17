@@ -1,10 +1,10 @@
 import CompsLayout from '@/components/layouts/Layout'
+import CompsLoading from '@/components/modals/loader/loader'
 
 import { useState, useEffect, useRef } from 'react'
 import { useRouter } from 'next/router'
 
 import { io } from "socket.io-client"
-import axios from 'axios'
 
 const generateUsername = () => {
     const adjs = ['happy', 'sleepy', 'grumpy', 'silly', 'funny']
@@ -28,9 +28,19 @@ const pageChatRoom = () => {
     // init chat and message
     const [chat, setChat] = useState([])
     const [msg, setMsg] = useState("")
-    const [roomName, setRoomName] = useState(room)
+
     socket.on('connect', () => {
         console.log('connected');
+    })
+
+    // if (router.isFallback) return <CompsLoading />     
+    // if (!chat || !connected) return <CompsLoading />     // need swr to fetch chat and connected
+
+    socket.on("disconnect", (reason) => {
+        console.log(`${username} disconnected from ${room}`);
+        if (reason == "io server disconnect") {
+            socket.connect()
+        }
     })
 
 
@@ -44,29 +54,21 @@ const pageChatRoom = () => {
         if (room) {
             console.log(room)
             socket.emit("join-room", { room, username }, initMsg => {
-                console.log(room, username);
+                console.log(room, username)
                 if (chat.length == 0) {
-                    setChat([initMsg, username, room])
+                    let d = { msg: initMsg, username: "Bot", room: room }
+                    setChat([...chat, d])
                 }
+                setConnected(true)
             })
 
-            axios({
-                method: "GET",
-                url: `/api/chat/${room}`,
-                header: {
-                    "Content-Type": "application/json"
-                }
-            }).then(resp => {
-                console.log(resp);
-                setRoomName(resp.data)
-            })
+        } else {
+            console.log("room is undefined.");
         }
 
 
         if (chat.length >= 10) return () => {
-
             socket.disconnect()
-            console.log(`${user} disconnected from ${room}`);
         }
 
     }, [chat, room])
@@ -77,7 +79,7 @@ const pageChatRoom = () => {
         if (msg === "") return
         // build msg obj
         let data = {
-            msg: msg, username: username, room: roomName
+            msg: msg, username: username, room: room
         }
         setChat([...chat, data])
         // dispatch message to other users
@@ -105,7 +107,6 @@ const pageChatRoom = () => {
     // Done
     // chatList -> determine which is me or other users
     const meUser = (msg, user) => {
-        console.log(msg, user);
         if (user == username) {
             return (
                 <div className="flex justify-end mb-4">
@@ -121,7 +122,6 @@ const pageChatRoom = () => {
     // Done
     // chatList -> determine which is me or other users
     const otherUser = (msg, user) => {
-        console.log(msg, user);
         if (user !== username) {
             return (
                 <div className="flex justify-start mb-4">
@@ -136,6 +136,7 @@ const pageChatRoom = () => {
 
         }
     }
+
 
     return (
         <CompsLayout>
@@ -277,3 +278,13 @@ const pageChatRoom = () => {
 
 
 export default pageChatRoom
+
+
+// export const getStaticProps = () => {
+
+//     const [initChat, setInitChat] = useState([])
+//     const router = useRouter()
+//     const { query: { room } } = router
+
+//     return { props: { initChat } }
+// }
