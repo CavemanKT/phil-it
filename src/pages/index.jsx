@@ -1,3 +1,4 @@
+import Link from "next/link"
 
 // Hooks
 
@@ -27,17 +28,17 @@ export default function PagesHome() {
                     <div className="p-4 bg-gray-100 rounded-xl w-full">
                         <ul className="flex sm:flex-col overflow-hidden content-center justify-between">
                             <li className="py-2 hover:bg-indigo-300 rounded">
-                                <a className="truncate" href="/">
+                                <Link className="truncate" href="/">
                                     <HomeIcon className="w-7 sm:mx-2 mx-4 inline" />
 
                                     <span className="hidden sm:inline">Home</span>
-                                </a>
+                                </Link>
                             </li>
                             <li className="py-2 hover:bg-indigo-300 rounded">
-                                <a className="truncate" href="/rooms">
+                                <Link className="truncate" href="/rooms">
                                     <ChatBubbleLeftRightIcon className="w-7 sm:mx-2 mx-4 inline" />
                                     <span className="hidden sm:inline">Rooms</span>
-                                </a>
+                                </Link>
                             </li>
                         </ul>
                     </div>

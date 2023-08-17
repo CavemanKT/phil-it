@@ -4,7 +4,7 @@ const socket = io(process.env.NEXT_PUBLIC_BACKEND_SOCKETIO_URL, { transports: ['
 import CompsLayout from '@/components/layouts/Layout'
 import { useRouter } from 'next/router'
 
-const pageTopics = () => {
+export default function PageTopics() {
     const router = useRouter()
 
 
@@ -34,5 +34,3 @@ const pageTopics = () => {
 
 
 
-
-export default pageTopics
