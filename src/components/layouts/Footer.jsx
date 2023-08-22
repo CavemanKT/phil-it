@@ -1,11 +1,10 @@
 import Link from 'next/link'
 
 export default function CompsLayoutsFooter() {
-    const newLocal = "text-2xl hidden sm:block mb-2"
     return (
         <footer id="footer" className="mt-auto mx-auto px-2">
             <div id="layer1" className="px-4 py-3 text-white mx-auto">
-                <h1 className={newLocal}>Footer</h1>
+                <h1 className="text-2xl hidden sm:block mb-2">Footer</h1>
                 <div id="layer2" className="flex">
                     <div id="layer3" className="flex-grow flex flex-col">
                         <a href="#" className="text-xs uppercase tracking-wider">Product</a>

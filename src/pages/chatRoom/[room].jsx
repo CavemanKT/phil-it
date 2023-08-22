@@ -1,6 +1,6 @@
 import CompsLayout from '@/components/layouts/Layout'
 import CompsLoading from '@/components/modals/loader/loader'
-
+import DATA_SET from '@/db/DATA_SET'
 
 import { useState, useEffect, useRef } from 'react'
 import { useRouter } from 'next/router'
@@ -15,8 +15,8 @@ const generateUsername = () => {
     return `${adj} ${noun}-${Math.floor(Math.random() * 100)}`
 }
 
+
 const socket = io(process.env.NEXT_PUBLIC_BASE_URL, { transports: ['websocket'] })
-const username = generateUsername()
 
 export default function PageChatRoom() {
     const router = useRouter()
@@ -25,14 +25,13 @@ export default function PageChatRoom() {
 
     // connected flag
     const [connected, setConnected] = useState(false)
+    const [username, setUsername] = useState("")
+    const [nickname, setNickname] = useState("")
 
     // init chat and message
     const [chat, setChat] = useState([])
     const [msg, setMsg] = useState("")
 
-    socket.on('connect', () => {
-        console.log('connected')
-    })
 
     // if (router.isFallback) return <CompsLoading />     
     // if (!chat || !connected) return <CompsLoading />     // need swr to fetch chat and connected
@@ -48,12 +47,20 @@ export default function PageChatRoom() {
 
     // ComponentDidMount -- start of useEffect
     useEffect(() => {
+        socket.on('connect', () => {
+            console.log('connected')
+        })
+
         socket.on('receive-message', (data) => {
             console.log(data.msg, data.username, data.room)
             setChat([...chat, data])
         })
 
         if (!connected) {
+            let username = generateUsername()
+            setUsername(username)
+            let nickname = username.slice(0, 2).toUpperCase()
+            setNickname(nickname)
             if (room) {
                 console.log(room)
                 socket.emit("join-room", { room, username }, initMsg => {
@@ -76,7 +83,7 @@ export default function PageChatRoom() {
             socket.disconnect()
         }
 
-    }, [chat, room])
+    }, [chat, room, router.query.room])
     // end of useEffect
 
     // Done. click enter, clear the input & dispatch msg
@@ -96,6 +103,14 @@ export default function PageChatRoom() {
 
         // focus after click
         inputRef?.current?.focus()
+    }
+
+
+    const hChangeChat = (e) => {
+        // console.log(e.target.innerText)
+        let room = e.target.innerText
+        router.push('/chatRoom/' + room)
+
     }
 
     // Done. input -> setMsg
@@ -150,21 +165,21 @@ export default function PageChatRoom() {
 
                 {/* <!-- headaer --> */}
                 <div className="px-5 py-5 flex justify-between items-center bg-white border-b-2">
-                    <div className="font-semibold text-2xl">{room}</div>
+                    <div className="font-semibold lg:text-2xl md:text-sm">{room}</div>
                     <div className="w-1/2">
                         <input type="text" name="" id="" placeholder="search IRL" className="rounded-2xl bg-gray-100 py-3 px-5 w-full" />
                     </div>
                     <div className="h-12 w-12 p-2 bg-yellow-500 rounded-full text-white font-semibold flex items-center justify-center">
-                        RA
+                        {nickname}
                     </div>
                 </div>
                 {/* <!-- end header --> */}
 
                 {/* <!-- Chatting --> */}
-                <div className="flex flex-row justify-between bg-white">
+                <div className="flex flex-row justify-between bg-white h-screen">
 
-                    {/* <!-- chat list --> */}
-                    <div className="flex flex-col w-2/5 border-r-2 overflow-y-auto">
+                    {/* <!-- left list --> */}
+                    <div className="flex flex-col w-2/5 border-r-2 overflow-auto">
                         {/* <!-- search compt --> */}
                         <div className="border-b-2 py-4 px-2">
                             <input type="text" placeholder="search chatting" className="py-2 px-2 border-2 border-gray-200 rounded-2xl w-full" />
@@ -174,73 +189,22 @@ export default function PageChatRoom() {
 
                         {/* <!-- user list --> */}
                         {/* user icon & info */}
-                        <div className="flex flex-row py-4 px-2 justify-center items-center border-b-2">
-                            <div className="w-1/4">
-                                <img src="https://source.unsplash.com/_7LbC5J-jw4/600x600" className="object-cover h-12 w-12 rounded-full" alt="" />
-                            </div>
-                            <div className="w-full">
-                                <div className="text-lg font-semibold">Luis1994</div>
-                                <span className="text-gray-500">Pick me at 9:00 Am</span>
-                            </div>
-                        </div>
-
-                        {/* user icon & info */}
-                        <div className="flex flex-row py-4 px-2 items-center border-b-2">
-                            <div className="w-1/4">
-                                <img src="https://source.unsplash.com/otT2199XwI8/600x600" className="object-cover h-12 w-12 rounded-full" alt="" />
-                            </div>
-                            <div className="w-full">
-                                <div className="text-lg font-semibold">Everest Trip 2021</div>
-                                <span className="text-gray-500">Hi Sam, Welcome</span>
-                            </div>
-                        </div>
-
-                        {/* user icon & info */}
-                        <div className="flex flex-row py-4 px-2 items-center border-b-2 border-l-4 border-blue-400">
-                            <div className="w-1/4">
-                                <img src="https://source.unsplash.com/L2cxSuKWbpo/600x600" className="object-cover h-12 w-12 rounded-full" alt="" />
-                            </div>
-                            <div className="w-full">
-                                <div className="text-lg font-semibold">MERN Stack</div>
-                                <span className="text-gray-500">Lusi : Thanks Everyone</span>
-                            </div>
-                        </div>
-
-                        {/* user icon & info */}
-                        <div className="flex flex-row py-4 px-2 items-center border-b-2">
-                            <div className="w-1/4">
-                                <img src="https://source.unsplash.com/vpOeXr5wmR4/600x600" className="object-cover h-12 w-12 rounded-full" alt="" />
-                            </div>
-                            <div className="w-full">
-                                <div className="text-lg font-semibold">Javascript Indonesia</div>
-                                <span className="text-gray-500">Evan : some one can fix this</span>
-                            </div>
-                        </div>
-
-                        {/* user icon & info */}
-                        <div className="flex flex-row py-4 px-2 items-center border-b-2">
-                            <div className="w-1/4">
-                                <img src="https://source.unsplash.com/vpOeXr5wmR4/600x600" className="object-cover h-12 w-12 rounded-full" alt="" />
-                            </div>
-                            <div className="w-full">
-                                <div className="text-lg font-semibold">Javascript Indonesia</div>
-                                <span className="text-gray-500">Evan : some one can fix this</span>
-                            </div>
-                        </div>
-
-                        {/* user icon & info */}
-                        <div className="flex flex-row py-4 px-2 items-center border-b-2">
-                            <div className="w-1/4">
-                                <img src="https://source.unsplash.com/vpOeXr5wmR4/600x600" className="object-cover h-12 w-12 rounded-full" alt="" />
-                            </div>
-                            <div className="w-full">
-                                <div className="text-lg font-semibold">Javascript Indonesia</div>
-                                <span className="text-gray-500">Evan : some one can fix this</span>
-                            </div>
-                        </div>
+                        {
+                            DATA_SET.map((item, index) => (
+                                <div key={`q_${index}`} className="flex flex-row py-4 px-2 justify-center items-center border-b-2">
+                                    {/* <div className="w-1/4">
+                                        <img src="https://source.unsplash.com/_7LbC5J-jw4/600x600" className="object-cover h-12 w-12 rounded-full" alt="" />
+                                    </div> */}
+                                    <div className="w-full">
+                                        <div className="text-lg font-semibold" onClick={hChangeChat}>{item.question}</div>
+                                        <span className="text-gray-500">Pick me at 9:00 Am</span>
+                                    </div>
+                                </div>
+                            ))
+                        }
                         {/* <!-- end user list --> */}
                     </div>
-                    {/* <!-- end chat list --> */}
+                    {/* <!-- end left list --> */}
 
                     {/* [chat] list */}
                     <div className="w-full px-5 flex flex-col justify-between">
