@@ -10,18 +10,18 @@ export default function useChat() {
     const apiEnterChat = (room) => (new Promise((resolve, reject) => {
         axios({
             method: "GET",
-            url: `/api/chatRoom/${room}`,
+            url: `/api/chatRoom/${room}`
         }).then((resp) => {
             resolve(resp)
-            console.log(resp);
+            console.log(resp)
         }).catch((err) => {
             reject(err)
-            console.log(err);
+            console.log(err)
         })
     }))
 
 
     return {
-        apiEnterChat,
+        apiEnterChat
     }
 }

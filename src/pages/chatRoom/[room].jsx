@@ -1,6 +1,7 @@
 import CompsLayout from '@/components/layouts/Layout'
 import CompsLoading from '@/components/modals/loader/loader'
 
+
 import { useState, useEffect, useRef } from 'react'
 import { useRouter } from 'next/router'
 
@@ -17,7 +18,7 @@ const generateUsername = () => {
 const socket = io(process.env.NEXT_PUBLIC_BASE_URL, { transports: ['websocket'] })
 const username = generateUsername()
 
-const pageChatRoom = () => {
+export default function PageChatRoom() {
     const router = useRouter()
     const { query: { room } } = router
     const inputRef = useRef(null)
@@ -30,18 +31,19 @@ const pageChatRoom = () => {
     const [msg, setMsg] = useState("")
 
     socket.on('connect', () => {
-        console.log('connected');
+        console.log('connected')
     })
 
     // if (router.isFallback) return <CompsLoading />     
     // if (!chat || !connected) return <CompsLoading />     // need swr to fetch chat and connected
 
     socket.on("disconnect", (reason) => {
-        console.log(`${username} disconnected from ${room}`);
+        console.log(`${username} disconnected from ${room}`)
         if (reason == "io server disconnect") {
             socket.connect()
         }
     })
+
 
 
     // ComponentDidMount -- start of useEffect
@@ -51,20 +53,23 @@ const pageChatRoom = () => {
             setChat([...chat, data])
         })
 
-        if (room) {
-            console.log(room)
-            socket.emit("join-room", { room, username }, initMsg => {
-                console.log(room, username)
-                if (chat.length == 0) {
-                    let d = { msg: initMsg, username: "Bot", room: room }
-                    setChat([...chat, d])
-                }
-                setConnected(true)
-            })
+        if (!connected) {
+            if (room) {
+                console.log(room)
+                socket.emit("join-room", { room, username }, initMsg => {
+                    console.log(room, username)
+                    if (chat.length == 0) {
+                        let d = { msg: initMsg, username: "Bot", room: room }
+                        setChat([...chat, d])
+                    }
+                    setConnected(true)
+                })
 
-        } else {
-            console.log("room is undefined.");
+            } else {
+                console.log("room is undefined.")
+            }
         }
+
 
 
         if (chat.length >= 10) return () => {
@@ -277,7 +282,6 @@ const pageChatRoom = () => {
 }
 
 
-export default pageChatRoom
 
 
 // export const getStaticProps = () => {
