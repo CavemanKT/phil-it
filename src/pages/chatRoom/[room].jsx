@@ -8,6 +8,8 @@ import {
 import { useState, useEffect, useRef } from 'react'
 import { useRouter } from 'next/router'
 
+const { readFileSync } = require("fs-extra")
+
 import { io } from "socket.io-client"
 
 const generateUsername = () => {
@@ -27,7 +29,14 @@ const generateColor = () => {
     return colors[randNum]
 }
 
-const socket = io(process.env.NEXT_PUBLIC_BASE_URL, { transports: ['websocket'] })
+const socket = io(process.env.NEXT_PUBLIC_BASE_URL, {
+    key: readFileSync('../../../../keys/client-key.pem'),
+    cert: readFileSync('../../../../keys/client-cert.pem'),
+    ca: [
+        readFileSync('../../../../keys/server-cert.pem')
+    ],
+    transports: ['websocket']
+})
 
 export default function PageChatRoom() {
     const router = useRouter()
