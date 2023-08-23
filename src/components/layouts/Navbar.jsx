@@ -1,3 +1,5 @@
+import Link from "next/link"
+import { useRouter } from "next/router"
 
 // tailwind css & heroicons
 import {
@@ -8,12 +10,38 @@ import {
   Input
 } from "@material-tailwind/react"
 import { BellIcon, Cog6ToothIcon } from "@heroicons/react/24/solid"
+import { useState } from "react"
+
 
 // img
 
 // user
 
+import { io } from "socket.io-client"
+const socket = io(process.env.NEXT_PUBLIC_BASE_URL, { transports: ['websocket'] })
+
 export default function CompsLayoutsNavbar() {
+  const router = useRouter()
+
+  const [searchVal, setSearchVal] = useState("")
+
+
+  const hSearchInputChange = (e) => {
+    setSearchVal(e.target.value)
+  }
+
+  const hKeyDown = (e) => {
+    if (e.key == 'Enter') {
+      hSearchQuestions()
+    }
+  }
+
+  const hSearchQuestions = () => {
+    console.log(socket)
+    socket.disconnect()
+    console.log(socket)
+    router.push('/rooms?q=' + searchVal)
+  }
 
   return (
 
@@ -54,11 +82,14 @@ export default function CompsLayoutsNavbar() {
             containerProps={{
               className: "min-w-[288px]"
             }}
+            onChange={hSearchInputChange}
+            onKeyDownCapture={hKeyDown}
           />
           <Button
             size="sm"
             color="white"
             className="!absolute right-1 top-1 rounded"
+            onClick={hSearchQuestions}
           >
             Search
           </Button>
