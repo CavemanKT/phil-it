@@ -1,11 +1,19 @@
 import CompsLayout from '@/components/layouts/Layout'
 import CompsLoading from '@/components/modals/loader/loader'
-import DATA_SET from '@/db/DATA_SET'
+import useChatScroll from '@/components/features/autoScroll.ts'
 
+import DATA_SET from '@/db/DATA_SET'
+import {
+    Typography,
+} from "@material-tailwind/react"
+
+var Filter = require('bad-words-chinese'),
+    filter = new Filter();
 import { useState, useEffect, useRef } from 'react'
 import { useRouter } from 'next/router'
 
 import { io } from "socket.io-client"
+
 
 const generateUsername = () => {
     const adjs = ['happy', 'sleepy', 'grumpy', 'silly', 'funny']
@@ -15,6 +23,14 @@ const generateUsername = () => {
     return `${adj} ${noun}-${Math.floor(Math.random() * 100)}`
 }
 
+const generateColor = () => {
+    const colors = [
+        'rose', 'pink', /*'fuchsia'*/, 'purple', /*'violet'*/, 'indigo', 'blue', 'sky', 'cyan', 'teal', 'emerald', 'green', 'lime', 'yellow', 'amber', 'orange', 'red', 'stone', 'neutral', 'zinc', 'gray', 'slate'
+    ]
+    let randNum = Math.floor(Math.random() * colors.length)
+    console.log(colors[randNum]);
+    return colors[randNum]
+}
 
 const socket = io(process.env.NEXT_PUBLIC_BASE_URL, { transports: ['websocket'] })
 
@@ -27,11 +43,12 @@ export default function PageChatRoom() {
     const [connected, setConnected] = useState(false)
     const [username, setUsername] = useState("")
     const [nickname, setNickname] = useState("")
+    const [bgColor, setBgColor] = useState("")
 
     // init chat and message
     const [chat, setChat] = useState([])
     const [msg, setMsg] = useState("")
-
+    const ref = useChatScroll(chat)
 
     // if (router.isFallback) return <CompsLoading />     
     // if (!chat || !connected) return <CompsLoading />     // need swr to fetch chat and connected
@@ -47,20 +64,30 @@ export default function PageChatRoom() {
 
     // ComponentDidMount -- start of useEffect
     useEffect(() => {
-        socket.on('connect', () => {
-            console.log('connected')
-        })
+
 
         socket.on('receive-message', (data) => {
             console.log(data.msg, data.username, data.room)
             setChat([...chat, data])
         })
+        socket.on("broadcast-who-joins", data => {
+            console.log(data)
+            setChat([...chat, data])
+        })
 
         if (!connected) {
+            socket.on('connect', () => {
+                console.log('connected')
+            })
+
+            // inital identity generation
             let username = generateUsername()
             setUsername(username)
             let nickname = username.slice(0, 2).toUpperCase()
             setNickname(nickname)
+            let bgColor = generateColor()
+            setBgColor(bgColor)
+
             if (room) {
                 console.log(room)
                 socket.emit("join-room", { room, username }, initMsg => {
@@ -77,23 +104,21 @@ export default function PageChatRoom() {
             }
         }
 
-
-
-        if (chat.length >= 10) return () => {
-            socket.disconnect()
-        }
-
     }, [chat, room, router.query.room])
     // end of useEffect
 
     // Done. click enter, clear the input & dispatch msg
     const sendMessage = async () => {
         if (msg === "") return
+
+        let filteredMsg = filter.clean(msg)
+
         // build msg obj
         let data = {
-            msg: msg, username: username, room: room
+            msg: filteredMsg, username: username, room: room
         }
         setChat([...chat, data])
+
         // dispatch message to other users
         const resp = socket.emit("message", data)
 
@@ -107,10 +132,13 @@ export default function PageChatRoom() {
 
 
     const hChangeChat = (e) => {
-        // console.log(e.target.innerText)
-        let room = e.target.innerText
-        router.push('/chatRoom/' + room)
-
+        // // console.log(e.target.innerText)
+        // let room = e.target.innerText
+        // console.log(socket)
+        // socket.disconnect()
+        // console.log(socket)
+        // setConnected(false)
+        // router.push('/chatRoom/' + room)
     }
 
     // Done. input -> setMsg
@@ -165,11 +193,11 @@ export default function PageChatRoom() {
 
                 {/* <!-- headaer --> */}
                 <div className="px-5 py-5 flex justify-between items-center bg-white border-b-2">
-                    <div className="font-semibold lg:text-2xl md:text-sm">{room}</div>
+                    <div className="font-semibold text-2xl">{room}</div>
                     <div className="w-1/2">
                         <input type="text" name="" id="" placeholder="search IRL" className="rounded-2xl bg-gray-100 py-3 px-5 w-full" />
                     </div>
-                    <div className="h-12 w-12 p-2 bg-yellow-500 rounded-full text-white font-semibold flex items-center justify-center">
+                    <div className={`h-12 w-12 p-2 bg-${bgColor}-500 rounded-full text-white font-semibold flex items-center justify-center`}>
                         {nickname}
                     </div>
                 </div>
@@ -179,7 +207,7 @@ export default function PageChatRoom() {
                 <div className="flex flex-row justify-between bg-white h-screen">
 
                     {/* <!-- left list --> */}
-                    <div className="flex flex-col w-2/5 border-r-2 overflow-auto">
+                    <div id="sidebar" className="flex flex-col w-2/5 border-r-2 overflow-auto">
                         {/* <!-- search compt --> */}
                         <div className="border-b-2 py-4 px-2">
                             <input type="text" placeholder="search chatting" className="py-2 px-2 border-2 border-gray-200 rounded-2xl w-full" />
@@ -196,8 +224,17 @@ export default function PageChatRoom() {
                                         <img src="https://source.unsplash.com/_7LbC5J-jw4/600x600" className="object-cover h-12 w-12 rounded-full" alt="" />
                                     </div> */}
                                     <div className="w-full">
-                                        <div className="text-lg font-semibold" onClick={hChangeChat}>{item.question}</div>
-                                        <span className="text-gray-500">Pick me at 9:00 Am</span>
+                                        {/* <div className="text-lg font-semibold" onClick={hChangeChat}>{item.question}</div> */}
+                                        <Typography
+                                            as="a"
+                                            href={`/chatRoom/${item.question}`}
+                                            variant="lead"
+                                            color="pink"
+                                            className="mr-4 ml-2 cursor-pointer py-1.5"
+                                            textGradient
+                                        >
+                                            {item.question}
+                                        </Typography>
                                     </div>
                                 </div>
                             ))
@@ -207,8 +244,8 @@ export default function PageChatRoom() {
                     {/* <!-- end left list --> */}
 
                     {/* [chat] list */}
-                    <div className="w-full px-5 flex flex-col justify-between">
-                        <div className="flex flex-col mt-5">
+                    <div id="msgBox" className="w-full px-5 flex flex-col justify-between">
+                        <div ref={ref} className="flex flex-col mt-5 overflow-auto">
                             {chat.length ? (chat.map((chat, i) => (
                                 <div key={"msg_" + i} tw='mt-1'>
                                     {chat.username === username ? meUser(chat.msg, chat.username) : otherUser(chat.msg, chat.username)}
@@ -222,37 +259,13 @@ export default function PageChatRoom() {
 
                         </div>
                         <div className="py-5">
-                            <input className="w-full bg-gray-300 py-5 px-3 rounded-xl" type="text" placeholder={connected ? "Type your message here." : "Connecting..."} ref={inputRef} value={msg} onChange={onChangeHandler} onKeyDownCapture={onKeyDownHandler} />
+                            <input className="w-full bg-gray-300 py-5 px-3 rounded-xl" type="text" placeholder={connected ? "Type your message here." : "Connecting..."} ref={inputRef} value={msg} onChange={onChangeHandler} onKeyDownCapture={onKeyDownHandler} onClick={sendMessage} />
                         </div>
                     </div>
                     {/* end [chat] list */}
 
-                    {/* Group name */}
-                    <div className="w-2/5 border-l-2 px-5">
-                        <div className="flex flex-col">
-                            <div className="font-semibold text-xl py-4">Mern Stack Group</div>
-                            <img src="https://source.unsplash.com/L2cxSuKWbpo/600x600" className="object-cover rounded-xl h-64" alt="" />
-                            <div className="font-semibold py-4">Created 22 Sep 2021</div>
-                            <div className="font-light">
-                                Lorem ipsum dolor sit amet consectetur adipisicing elit. Deserunt,
-                                perspiciatis!
-                            </div>
-                        </div>
-                    </div>
                 </div>
             </div>
         </CompsLayout >
     )
 }
-
-
-
-
-// export const getStaticProps = () => {
-
-//     const [initChat, setInitChat] = useState([])
-//     const router = useRouter()
-//     const { query: { room } } = router
-
-//     return { props: { initChat } }
-// }
