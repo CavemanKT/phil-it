@@ -1,14 +1,19 @@
 import CompsLayout from '@/components/layouts/Layout'
 import CompsLoading from '@/components/modals/loader/loader'
+import useChatScroll from '@/components/features/autoScroll.ts'
+
 import DATA_SET from '@/db/DATA_SET'
 import {
     Typography,
 } from "@material-tailwind/react"
 
+var Filter = require('bad-words-chinese'),
+    filter = new Filter();
 import { useState, useEffect, useRef } from 'react'
 import { useRouter } from 'next/router'
 
 import { io } from "socket.io-client"
+
 
 const generateUsername = () => {
     const adjs = ['happy', 'sleepy', 'grumpy', 'silly', 'funny']
@@ -20,7 +25,7 @@ const generateUsername = () => {
 
 const generateColor = () => {
     const colors = [
-        'rose', 'pink', 'fuchsia', 'purple', 'violet', 'indigo', 'blue', 'sky', 'cyan', 'teal', 'emerald', 'green', 'lime', 'yellow', 'amber', 'orange', 'red', 'stone', 'neutral', 'zinc', 'gray', 'slate'
+        'rose', 'pink', /*'fuchsia'*/, 'purple', /*'violet'*/, 'indigo', 'blue', 'sky', 'cyan', 'teal', 'emerald', 'green', 'lime', 'yellow', 'amber', 'orange', 'red', 'stone', 'neutral', 'zinc', 'gray', 'slate'
     ]
     let randNum = Math.floor(Math.random() * colors.length)
     console.log(colors[randNum]);
@@ -43,7 +48,7 @@ export default function PageChatRoom() {
     // init chat and message
     const [chat, setChat] = useState([])
     const [msg, setMsg] = useState("")
-
+    const ref = useChatScroll(chat)
 
     // if (router.isFallback) return <CompsLoading />     
     // if (!chat || !connected) return <CompsLoading />     // need swr to fetch chat and connected
@@ -99,23 +104,21 @@ export default function PageChatRoom() {
             }
         }
 
-
-
-        if (chat.length >= 10) return () => {
-            socket.disconnect()
-        }
-
     }, [chat, room, router.query.room])
     // end of useEffect
 
     // Done. click enter, clear the input & dispatch msg
     const sendMessage = async () => {
         if (msg === "") return
+
+        let filteredMsg = filter.clean(msg)
+
         // build msg obj
         let data = {
-            msg: msg, username: username, room: room
+            msg: filteredMsg, username: username, room: room
         }
         setChat([...chat, data])
+
         // dispatch message to other users
         const resp = socket.emit("message", data)
 
@@ -241,8 +244,8 @@ export default function PageChatRoom() {
                     {/* <!-- end left list --> */}
 
                     {/* [chat] list */}
-                    <div className="w-full px-5 flex flex-col justify-between">
-                        <div className="flex flex-col mt-5 overflow-auto">
+                    <div id="msgBox" className="w-full px-5 flex flex-col justify-between">
+                        <div ref={ref} className="flex flex-col mt-5 overflow-auto">
                             {chat.length ? (chat.map((chat, i) => (
                                 <div key={"msg_" + i} tw='mt-1'>
                                     {chat.username === username ? meUser(chat.msg, chat.username) : otherUser(chat.msg, chat.username)}
