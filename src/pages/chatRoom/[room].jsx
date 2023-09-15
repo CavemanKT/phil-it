@@ -25,7 +25,7 @@ const generateUsername = () => {
 
 const generateColor = () => {
     const colors = [
-        'rose', 'pink', /*'fuchsia'*/, 'purple', /*'violet'*/, 'indigo', 'blue', 'sky', 'cyan', 'teal', 'emerald', 'green', 'lime', 'yellow', 'amber', 'orange', 'red', 'stone', 'neutral', 'zinc', 'gray', 'slate'
+        'rose', 'pink', /*'fuchsia', */ 'purple', /*'violet',*/ 'indigo', 'blue', 'sky', 'cyan', 'teal', /* 'emerald', */ 'green', 'lime', 'yellow', 'amber', 'orange', 'red', /* 'stone', */ 'neutral', 'zinc', 'gray', 'slate'
     ]
     let randNum = Math.floor(Math.random() * colors.length)
     console.log(colors[randNum]);
@@ -38,6 +38,7 @@ export default function PageChatRoom() {
     const router = useRouter()
     const { query: { room } } = router
     const inputRef = useRef(null)
+    const scrollRef = useRef(0)
 
     // connected flag
     const [connected, setConnected] = useState(false)
@@ -45,18 +46,26 @@ export default function PageChatRoom() {
     const [nickname, setNickname] = useState("")
     const [bgColor, setBgColor] = useState("")
 
+    // chat notification
+    const [chatNotification, setNotification] = useState(0)
+
     // init chat and message
     const [chat, setChat] = useState([])
     const [msg, setMsg] = useState("")
     const ref = useChatScroll(chat)
+    const [scrollToBottom, setScrollToBottom] = useState(false)
+    const [scrollTop, setScrollTop] = useState(0)
 
     // if (router.isFallback) return <CompsLoading />     
     // if (!chat || !connected) return <CompsLoading />     // need swr to fetch chat and connected
 
     socket.on("disconnect", (reason) => {
+        console.log("channel: on disconnect: ", reason);
         console.log(`${username} disconnected from ${room}`)
         if (reason == "io server disconnect") {
+            console.log("if reason == io server disconnect")
             socket.connect()
+            console.log("socket fn: connect");
         }
     })
 
@@ -67,17 +76,19 @@ export default function PageChatRoom() {
 
 
         socket.on('receive-message', (data) => {
+            console.log("channel: on receive-message.")
             console.log(data.msg, data.username, data.room)
             setChat([...chat, data])
         })
         socket.on("broadcast-who-joins", data => {
+            console.log("channel: on broadcast-who-joins.")
             console.log(data)
             setChat([...chat, data])
         })
 
         if (!connected) {
             socket.on('connect', () => {
-                console.log('connected')
+                console.log('channel: on connect')
             })
 
             // inital identity generation
@@ -91,6 +102,7 @@ export default function PageChatRoom() {
             if (room) {
                 console.log(room)
                 socket.emit("join-room", { room, username }, initMsg => {
+                    console.log("channel: emit join-room");
                     console.log(room, username)
                     if (chat.length == 0) {
                         let d = { msg: initMsg, username: "Bot", room: room }
@@ -101,11 +113,31 @@ export default function PageChatRoom() {
 
             } else {
                 console.log("room is undefined.")
+                setConnected(false)
             }
         }
 
     }, [chat, room, router.query.room])
     // end of useEffect
+
+    // scroll and chat control
+    useEffect(() => {
+        if (ref.current.scrollTop >= ref.current.scrollHeight - 538) {
+            setNotification(0)
+            setScrollToBottom(true)
+        } else {
+            setNotification(chatNotification + 1)
+            setScrollToBottom(false)
+        }
+    }, [chat])
+    useEffect(() => {
+        if (!scrollToBottom && ref.current.scrollTop >= ref.current.scrollHeight - 538) {
+            setNotification(0)
+            setScrollToBottom(true)
+        }
+    }, [scrollTop])
+
+
 
     // Done. click enter, clear the input & dispatch msg
     const sendMessage = async () => {
@@ -121,7 +153,7 @@ export default function PageChatRoom() {
 
         // dispatch message to other users
         const resp = socket.emit("message", data)
-
+        console.log("channel: emit message");
 
         // reset field if OK
         if (resp) setMsg("")
@@ -130,15 +162,11 @@ export default function PageChatRoom() {
         inputRef?.current?.focus()
     }
 
-
-    const hChangeChat = (e) => {
-        // // console.log(e.target.innerText)
-        // let room = e.target.innerText
-        // console.log(socket)
-        // socket.disconnect()
-        // console.log(socket)
-        // setConnected(false)
-        // router.push('/chatRoom/' + room)
+    const onScrollHandler = (e) => {
+        setScrollTop(e.currentTarget.scrollTop)
+        console.log(scrollTop)
+        if (scrollTop >= ref.current.scrollHeight - 100) setScrollToBottom(true)
+        else setScrollToBottom(false)
     }
 
     // Done. input -> setMsg
@@ -183,6 +211,16 @@ export default function PageChatRoom() {
             )
 
         }
+    }
+
+    const Notification = () => {
+        return (
+            <div className="flex justify-end mb-4">
+                <div className="mr-2 py-3 px-4 bg-orange-400 rounded-3xl text-white" >
+                    {chatNotification}
+                </div>
+            </div>
+        )
     }
 
 
@@ -245,7 +283,7 @@ export default function PageChatRoom() {
 
                     {/* [chat] list */}
                     <div id="msgBox" className="w-full px-5 flex flex-col justify-between">
-                        <div ref={ref} className="flex flex-col mt-5 overflow-auto">
+                        <div ref={ref} className="flex flex-col mt-5 overflow-auto" onScroll={onScrollHandler}>
                             {chat.length ? (chat.map((chat, i) => (
                                 <div key={"msg_" + i} tw='mt-1'>
                                     {chat.username === username ? meUser(chat.msg, chat.username) : otherUser(chat.msg, chat.username)}
@@ -257,6 +295,9 @@ export default function PageChatRoom() {
                                 </div>
                             )}
 
+                        </div>
+                        <div>
+                            {chatNotification != 0 && <Notification />}
                         </div>
                         <div className="py-5">
                             <input className="w-full bg-gray-300 py-5 px-3 rounded-xl" type="text" placeholder={connected ? "Type your message here." : "Connecting..."} ref={inputRef} value={msg} onChange={onChangeHandler} onKeyDownCapture={onKeyDownHandler} onClick={sendMessage} />
