@@ -14,7 +14,7 @@ export default function CompLayout({ children }) {
         <link rel="icon" type="image/x-icon" href="/images/favicon.png" />
       </Head>
 
-      <div id="comps-layout">
+      <div className='h-screen'>
         <CompsLayoutsNavbar />
         {children}
         <CompsLayoutsFooter />

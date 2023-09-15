@@ -38,7 +38,6 @@ export default function PageChatRoom() {
     const router = useRouter()
     const { query: { room } } = router
     const inputRef = useRef(null)
-    const scrollRef = useRef(0)
 
     // connected flag
     const [connected, setConnected] = useState(false)
@@ -53,8 +52,7 @@ export default function PageChatRoom() {
     const [chat, setChat] = useState([])
     const [msg, setMsg] = useState("")
     const ref = useChatScroll(chat)
-    const [scrollToBottom, setScrollToBottom] = useState(false)
-    const [scrollTop, setScrollTop] = useState(0)
+    const [bottom, setBottom] = useState(false)
 
     // if (router.isFallback) return <CompsLoading />     
     // if (!chat || !connected) return <CompsLoading />     // need swr to fetch chat and connected
@@ -120,25 +118,6 @@ export default function PageChatRoom() {
     }, [chat, room, router.query.room])
     // end of useEffect
 
-    // scroll and chat control
-    useEffect(() => {
-        if (ref.current.scrollTop >= ref.current.scrollHeight - 538) {
-            setNotification(0)
-            setScrollToBottom(true)
-        } else {
-            setNotification(chatNotification + 1)
-            setScrollToBottom(false)
-        }
-    }, [chat])
-    useEffect(() => {
-        if (!scrollToBottom && ref.current.scrollTop >= ref.current.scrollHeight - 538) {
-            setNotification(0)
-            setScrollToBottom(true)
-        }
-    }, [scrollTop])
-
-
-
     // Done. click enter, clear the input & dispatch msg
     const sendMessage = async () => {
         if (msg === "") return
@@ -160,13 +139,6 @@ export default function PageChatRoom() {
 
         // focus after click
         inputRef?.current?.focus()
-    }
-
-    const onScrollHandler = (e) => {
-        setScrollTop(e.currentTarget.scrollTop)
-        console.log(scrollTop)
-        if (scrollTop >= ref.current.scrollHeight - 100) setScrollToBottom(true)
-        else setScrollToBottom(false)
     }
 
     // Done. input -> setMsg
@@ -211,16 +183,6 @@ export default function PageChatRoom() {
             )
 
         }
-    }
-
-    const Notification = () => {
-        return (
-            <div className="flex justify-end mb-4">
-                <div className="mr-2 py-3 px-4 bg-orange-400 rounded-3xl text-white" >
-                    {chatNotification}
-                </div>
-            </div>
-        )
     }
 
 
@@ -283,7 +245,7 @@ export default function PageChatRoom() {
 
                     {/* [chat] list */}
                     <div id="msgBox" className="w-full px-5 flex flex-col justify-between">
-                        <div ref={ref} className="flex flex-col mt-5 overflow-auto" onScroll={onScrollHandler}>
+                        <div ref={ref} className="flex flex-col mt-5 overflow-auto">
                             {chat.length ? (chat.map((chat, i) => (
                                 <div key={"msg_" + i} tw='mt-1'>
                                     {chat.username === username ? meUser(chat.msg, chat.username) : otherUser(chat.msg, chat.username)}
@@ -296,9 +258,7 @@ export default function PageChatRoom() {
                             )}
 
                         </div>
-                        <div>
-                            {chatNotification != 0 && <Notification />}
-                        </div>
+
                         <div className="py-5">
                             <input className="w-full bg-gray-300 py-5 px-3 rounded-xl" type="text" placeholder={connected ? "Type your message here." : "Connecting..."} ref={inputRef} value={msg} onChange={onChangeHandler} onKeyDownCapture={onKeyDownHandler} onClick={sendMessage} />
                         </div>
